@@ -1,0 +1,55 @@
+---
+title: "DILI_timepoint"
+author: "Steven Wink"
+date: "4 mei 2018"
+output:
+  html_document:
+    number_sections: yes
+    toc: yes
+    toc_depth: 2
+---
+
+## Pre processing & quality control of DILI timepoint screen
+
+
+Set some options  
+```{r setup, include=FALSE}
+rm(list=ls()) # clean R memory
+knitr::opts_chunk$set(echo = TRUE)
+options(stringsAsFactors = FALSE) 
+
+```
+
+
+load packages  
+```{r packages}
+
+required_packages <- c('dplyr', 'ggplot2', 'tidyr', 'data.table')
+required_package_installed <- sapply(required_packages, require, character.only = TRUE)
+if(!all(required_package_installed)) {
+  source("http://bioconductor.org/biocLite.R")
+  biocLite(required_packages[!required_package_installed], suppressUpdates = TRUE)
+}
+if(!require('knitr')) { install.packages('knitr') }
+
+sapply( required_packages[!required_package_installed], require, character.only = TRUE)
+
+```
+
+
+```{r load_data}
+
+source('load_data.R')
+raw_data <- load_data()
+length(raw_data)
+require(data.table)
+head(raw_data[[1]][[3]]$myDT) # cell line replID tables
+
+
+load("J:/Workgroups/FWN/LACDR/TOX/data Wouter den Hollander/DATA/ExperimentData/DILIscreen/RDataFiles_EndPointDILI/moved/parsedBTG2.RData")
+load("J:/Workgroups/FWN/LACDR/TOX/data Wouter den Hollander/DATA/ExperimentData/DILIscreen/RDataFiles_EndPointDILI/moved/parsedOutputLists.RData")
+
+head(datCombined$BIP)
+
+```
+
