@@ -2,16 +2,18 @@
 ## All function accept a single replicate from outputList
 
 ## Settings
+
+
+
 	options(stringsAsFactors = FALSE)
 	
 	library(data.table)
 	library(preprocessCore)
 	library(parallel)
-	
 
 ## Functions
 	# meta column parser
-	.parseMetaColumns <- function(dt, mc, verbose = FALSE, .debug = FALSE) {
+	.parseMetaColumns <- function(dt, mc, verbose = TRUE, .debug = FALSE,...) {
 		if(.debug) {
 			verbose <- FALSE
 			dt <- outputList[[1]]$sumData
@@ -28,6 +30,7 @@
 			dt$plateID <- toupper(sub('_wells', '', dt$plateID, fixed = TRUE))
 			if(verbose) cat('2 of 4 steps done.\n')
 
+			
 		# Add repID, CMAX & CMAX_numeric
 			if(verbose) cat('Parseing repIDs and CMAXs...\n')
 			plateID_splitted <- do.call(rbind, strsplit(dt$plateID, '_'))
@@ -39,7 +42,7 @@
 				colnames(plateID_splitted)[grep('H',  plateID_splitted[1, ])]    <- 'TIME'
 
 
-			dt$repID <- as.numeric(sub('REP', '', plateID_splitted[, 'repID'], fixed = TRUE))
+dt$repID <- as.numeric(sub('REP', '', plateID_splitted[, 'repID'], fixed = TRUE))
 			dt$CMAX  <- plateID_splitted[, 'CMAX']
 			dt$CMAX_numeric <- as.numeric(sub('CMAX', '', dt$CMAX, fixed = TRUE))
 			if(verbose) cat('3 of 4 steps done.\n')
@@ -88,7 +91,7 @@
 				DMSOstats <- do.call(rbind, mclapply(plateIDs, function(.plateID) {
 					.ind <- intersect(which(myDT$plateID == .plateID), indDMSO)
 					c(mean(myDT[.ind, ][[featureGFP]], na.rm = TRUE), median(myDT[.ind, ][[featureGFP]], na.rm = TRUE) )
-				}, mc.cores = 6, mc.preschedule = FALSE))
+				}, mc.cores = 1, mc.preschedule = FALSE))
 			} else {
 				DMSOstats <- do.call(rbind, lapply(plateIDs, function(.plateID) {
 					.ind <- intersect(which(myDT$plateID == .plateID), indDMSO)
@@ -141,7 +144,7 @@
 					(sum(myDT[myDT$uniqueID == .uniqueID, ][['Above_5_meanIntregated_plateDMSO']], na.rm = TRUE)), #   / (sumData[sumData$uniqueID == .uniqueID][['numberOfObjects']]),
 					(sum(myDT[myDT$uniqueID == .uniqueID, ][['Above_5_medianIntregated_plateDMSO']], na.rm = TRUE)) # / (sumData[sumData$uniqueID == .uniqueID][['numberOfObjects']])
 				  )	
-				}, mc.cores = 6, mc.preschedule = FALSE))	
+				}, mc.cores = 1, mc.preschedule = FALSE))	
 			} else {
 				objectsAboveDMSO <- do.call(rbind, lapply(sumData$uniqueID, function(.uniqueID) {
 				  c(	
@@ -205,7 +208,7 @@
 				DMSOstats <- do.call(rbind, mclapply(plateIDs, function(.plateID) {
 					.ind <- intersect(which(myDT$plateID == .plateID), indDMSO)
 					c(mean(myDT[.ind, ][[featureGFP]], na.rm = TRUE), median(myDT[.ind, ][[featureGFP]], na.rm = TRUE) )
-				}, mc.cores = 6, mc.preschedule = FALSE))
+				}, mc.cores = 1, mc.preschedule = FALSE))
 			} else {
 				DMSOstats <- do.call(rbind, lapply(plateIDs, function(.plateID) {
 					.ind <- intersect(which(myDT$plateID == .plateID), indDMSO)
@@ -258,7 +261,7 @@
 					(sum(myDT[myDT$uniqueID == .uniqueID, ][['Below_5_meanIntregated_plateDMSO']], na.rm = TRUE)), #   / (sumData[sumData$uniqueID == .uniqueID][['numberOfObjects']]),
 					(sum(myDT[myDT$uniqueID == .uniqueID, ][['Below_5_medianIntregated_plateDMSO']], na.rm = TRUE)) # / (sumData[sumData$uniqueID == .uniqueID][['numberOfObjects']])
 				  )	
-				}, mc.cores = 6, mc.preschedule = FALSE))	
+				}, mc.cores = 1, mc.preschedule = FALSE))	
 			} else {
 				objectsBelowDMSO <- do.call(rbind, lapply(sumData$uniqueID, function(.uniqueID) {
 				  c(	
@@ -318,7 +321,7 @@
 
 					c(.uniqueID, objectsAnV, fractionAnV, meanAnV, medianAnV)
 
-				}, mc.cores = 6, mc.preschedule = FALSE))
+				}, mc.cores = 1, mc.preschedule = FALSE))
 			} else {
 				AnVstats <- do.call(rbind, lapply(sumData$uniqueID, function(.uniqueID) {
 					.AnV <- myDT$AnV_masked_primaryID_AreaShape_Area[which(myDT$uniqueID == .uniqueID)]
@@ -370,7 +373,7 @@
 
 					c(.uniqueID, objectsPI, fractionPI, meanPI, medianPI)
 
-				}, mc.cores = 6, mc.preschedule = FALSE))
+				}, mc.cores = 1, mc.preschedule = FALSE))
 			} else {
 				PIstats <- do.call(rbind, lapply(sumData$uniqueID, function(.uniqueID) {
 					.PI <- myDT$PI_masked_primaryID_AreaShape_Area[which(myDT$uniqueID == .uniqueID)]
@@ -396,7 +399,7 @@
 	}
 
 	# Wrapper function
-	outputListParser <- function(list2parse, ICAM1 = FALSE, MC = TRUE, subMC = TRUE, mcCores = 3, .debug = FALSE, ...) {
+	outputListParser <- function(list2parse, ICAM1 = FALSE, MC = FALSE, subMC = FALSE, mcCores = 1, .debug = FALSE, ...) {
 		if(.debug) {
 			list2parse <- outputList
 			subMC <- TRUE
@@ -413,7 +416,7 @@
 				.outputList <- mclapply(list2parse, function(rep) {
 					list(sumData = .parseMetaColumns(rep$sumData, mc = subMC), 
 						 myDT    = .parseMetaColumns(rep$myDT, mc = subMC))
-				}, mc.cores = mcCores, mc.preschedule = FALSE)
+				}, mc.cores = 1, mc.preschedule = FALSE)
 			} else {
 				.outputList <- lapply(list2parse, function(rep) {
 					list(sumData = .parseMetaColumns(rep$sumData, mc = subMC), 
@@ -436,7 +439,6 @@
 						.anv_rev  <- .addAnV(.dmso_rev$myDT, .dmso_rev$sumData, mc = subMC)
 						.pi_rev   <- .addPI(.dmso_rev$myDT, .anv_rev, mc = subMC)
 
-
 						list(sumData = .pi, 
 						 	 myDT = .dmso$myDT,
 						 	 sumData_rev = .pi_rev,
@@ -456,43 +458,62 @@
 			return(.outputList)	
 	}
 
-
 ## Parse reporter screens
 	if(FALSE) {
-	  inputDir <- '/Users/Wouter/stack/ownCloud/TOX/ExperimentData/DILIscreen/RDataFiles_EndPointDILI/'
+	  inputDir <- 'D:/analysis/DILI timepoint/data/'
 		
-	  load(paste0(inputDir, 'outputListBIP.Rdata'))
-	  BIP <- outputListParser(list2parse = outputList, verbose = TRUE)
-	  	save(BIP, file = paste0(inputDir, 'parsedBIP.RData'))
-
-	  load(paste0(inputDir, 'outputListSRXN1.Rdata'))
-	  SRXN1 <- outputListParser(list2parse = outputList, subMC = TRUE, MC = FALSE)
-	  	save(SRXN1, file = paste0(inputDir, 'parsedSRXN1.RData'))
-
-	  load(paste0(inputDir, 'outputListP21.Rdata'))
-	  P21 <- outputListParser(list2parse = outputList, subMC = TRUE, MC = FALSE)
-	  	save(P21, file = paste0(inputDir, 'parsedP21.RData'))	
-
-	  load(paste0(inputDir, 'outputListICAM1.Rdata'))
-	  ICAM1 <- outputListParser(list2parse = outputList, ICAM1 = TRUE, subMC = TRUE, MC = FALSE)
-	  	save(ICAM1, file = paste0(inputDir, 'parsedICAM1.RData'))	
-
-	  load(paste0(inputDir, 'outputListCHOP.Rdata'))
-	  CHOP <- outputListParser(list2parse = outputList, subMC = TRUE, MC = FALSE)
-	  	save(CHOP, file = paste0(inputDir, 'parsedCHOP.RData'))			
-
-	  load(paste0(inputDir, 'outputListHSPA1B.Rdata'))
-	  HSPA1B <- outputListParser(list2parse = outputList, subMC = TRUE, MC = FALSE)
-	  	save(HSPA1B, file = paste0(inputDir, 'parsedHSPA1B.RData'))	
-
-	  load(paste0(inputDir, 'outputListBTG2.Rdata'))
-	  BTG2 <- outputListParser(list2parse = outputList, subMC = TRUE, MC = FALSE)
-	  	save(BTG2, file = paste0(inputDir, 'parsedBTG2.RData'))	
-
-	  load(paste0(inputDir, 'outputListHMOX1.Rdata'))
-	  HMOX1 <- outputListParser(list2parse = outputList, subMC = TRUE, MC = FALSE)
-	  	save(HMOX1, file = paste0(inputDir, 'parsedHMOX1.RData'))		
-
+	  load(paste0(inputDir, 'BIP/', 'outputList BIP.Rdata'))
+	  BIP <- outputListParser(list2parse = outputList, verbose = TRUE, subMC = FALSE, MC = FALSE, mcCores = 1)
+	  save(BIP, file = paste0(inputDir, 'BIP/', 'parsedBIP.RData'))
+rm('BIP')
+rm('outputList')
+gc(reset=TRUE)
+	 
+ load(paste0(inputDir, 'SRXN1/', 'outputList110516.Rdata'))
+	  SRXN1 <- outputListParser(list2parse = outputList,verbose = TRUE, subMC = FALSE, MC = FALSE, mcCores = 1)
+	  save(SRXN1, file = paste0(inputDir, 'SRXN1/', 'parsedSRXN1.RData'))
+	  rm('SRXN1')
+	  rm('outputList')
+	  gc(reset=TRUE)
+	  
+	  load(paste0(inputDir, 'P21/', 'outputList12052016.Rdata'))
+	  P21 <- outputListParser(list2parse = outputList, verbose = TRUE, subMC = FALSE, MC = FALSE, mcCores = 1)
+	  save(P21, file = paste0(inputDir,'P21/', 'parsedP21.RData'))	
+	  rm('P21')
+	  rm('outputList')
+	  gc(reset=TRUE)
+	  
+	  load(paste0(inputDir,'ICAM1/', 'outputListICAM1.Rdata'))
+	  ICAM1 <- outputListParser(list2parse = outputList, ICAM1 = TRUE, verbose = TRUE, subMC = FALSE, MC = FALSE, mcCores = 1)
+	  save(ICAM1, file = paste0(inputDir,'ICAM1/', 'parsedICAM1.RData'))	
+	  rm('ICAM1')
+	  rm('outputList')
+	  gc(reset=TRUE)
+	  
+	  load(paste0(inputDir, 'CHOP/', 'outputList110516.Rdata'))
+	  CHOP <- outputListParser(list2parse = outputList, verbose = TRUE, subMC = FALSE, MC = FALSE, mcCores = 1)
+	  save(CHOP, file = paste0(inputDir,'CHOP/', 'parsedCHOP.RData'))			
+	  rm('CHOP')
+	  rm('outputList')
+	  gc(reset=TRUE)
+	  
+	  load(paste0(inputDir, 'HSPA1B/', 'outputList HSPA1B.Rdata'))
+	  HSPA1B <- outputListParser(list2parse = outputList, verbose = TRUE, subMC = FALSE, MC = FALSE, mcCores = 1)
+	  save(HSPA1B, file = paste0(inputDir, 'HSPA1B/', 'parsedHSPA1B.RData'))	
+	  rm('HSPA1B')
+	  rm('outputList')
+	  gc(reset=TRUE)
+	  
+	  load(paste0(inputDir, 'BTG2/', 'outputList.Rdata'))
+	  BTG2 <- outputListParser(list2parse = outputList, verbose = TRUE, subMC = FALSE, MC = FALSE, mcCores = 1)
+	  save(BTG2, file = paste0(inputDir, 'BTG2/', 'parsedBTG2.RData'))	
+	  rm('BTG2')
+	  rm('outputList')
+	  gc(reset=TRUE)
+	  
+	  load(paste0(inputDir, 'HMOX1/', 'outputList.Rdata'))
+	  HMOX1 <- outputListParser(list2parse = outputList, verbose = TRUE, subMC = FALSE, MC = FALSE, mcCores = 1)
+	  save(HMOX1, file = paste0(inputDir, 'HMOX1/', 'parsedHMOX1.RData'))		
 
 	}
 
