@@ -42,12 +42,28 @@ clean_load_sel_count_dose_cmax <- function( parsedlistpath, name, cyto ) {
   myDT_list_sel <- lapply(myDT_list, function(x) {
     x[ , c('treatment', 'dose_uM', 'CMAX', 'cell_line', 'plateID', 'timeID', 'replID', 'imageCountParentObj', 'locationID', 
               'PI_masked_primaryID_AreaShape_Area', 'AnV_masked_primaryID_AreaShape_Area', 
-              ifelse(TRUE, 'Cytoplasm_Intensity_MeanIntensity_image_GFP', 'Nuclei_Intensity_MeanIntensity_image_GFP' )
+              ifelse(cyto, 'Cytoplasm_Intensity_MeanIntensity_image_GFP', 'Nuclei_Intensity_MeanIntensity_image_GFP' )
               ,
-              ifelse(TRUE, 'Cytoplasm_Intensity_IntegratedIntensity_image_GFP', 'Nuclei_Intensity_IntegratedIntensity_image_GFP')
+              ifelse(cyto, 'Cytoplasm_Intensity_IntegratedIntensity_image_GFP', 'Nuclei_Intensity_IntegratedIntensity_image_GFP')
                 )]
   } 
 )
+  
+  
+  
+  
+  myDT_list_sel <- lapply(myDT_list, function(x) {
+    x[ , c('treatment', 'dose_uM', 'CMAX', 'cell_line', 'plateID', 'timeID', 'replID', 'imageCountParentObj', 'locationID', 
+           'PI_masked_primaryID_AreaShape_Area', 'AnV_masked_primaryID_AreaShape_Area', 
+            'Nuclei_Intensity_MeanIntensity_image_GFP' 
+           
+          
+    )]
+  } 
+  )
+  
+  
+  
   
   return(myDT_list_sel)
     
@@ -55,7 +71,7 @@ clean_load_sel_count_dose_cmax <- function( parsedlistpath, name, cyto ) {
 
 ##==## calculate GFP count values, base GFP intensity counts on log transformed single cell integrated intensity values
 calc_GFP_Counts <- function(inputdata, ICAM1 = FALSE) {
-  
+ 
  # get variable colnames 
   meanIntColname <- lapply(inputdata, function(x) {
     colnames(x)[ which(grepl( 'Intensity_MeanIntensity_image_GFP' , colnames(x) ))]
@@ -141,14 +157,14 @@ calc_GFP_Counts <- function(inputdata, ICAM1 = FALSE) {
       )
       
        
-      
+    
     } else if("DMSO_intint_plate_lognorm" %in% colnames(inputdata[[1]])){
       inputdata <- lapply(inputdata, function(x) x[ , c("GFP_pos1i", "GFP_pos2i", "GFP_pos3i", "GFP_pos4i",
                                                         "GFP_neg1i", "GFP_neg2i", "GFP_neg3i", "GFP_neg4i") := 
-                                                      list(lognorm(get(integrIntColname)) > 1*DMSO_meanint_plate_lognorm,
-                                                           lognorm(get(integrIntColname)) > 2*DMSO_meanint_plate_lognorm,
-                                                           lognorm(get(integrIntColname)) > 3*DMSO_meanint_plate_lognorm,
-                                                           lognorm(get(integrIntColname)) > 4*DMSO_meanint_plate_lognorm,
+                                                      list(lognorm(get(integrIntColname)) > 1*DMSO_intint_plate_lognorm,
+                                                           lognorm(get(integrIntColname)) > 2*DMSO_intint_plate_lognorm,
+                                                           lognorm(get(integrIntColname)) > 3*DMSO_intint_plate_lognorm,
+                                                           lognorm(get(integrIntColname)) > 4*DMSO_intint_plate_lognorm,
                                                            
                                                            lognorm(get(integrIntColname)) < 1*DMSO_intint_plate_lognorm,
                                                            lognorm(get(integrIntColname)) < 1/2*DMSO_intint_plate_lognorm,
@@ -260,12 +276,13 @@ return(inputdata)
 parsedlistpath <- 'D:/analysis/DILI timepoint/data/'
 dir(parsedlistpath)
 
-name = 'BTG2'
-cyto = TRUE
+name = 'CHOP'
+cyto = FALSE
 
-loaded_data <- clean_load_sel_count_dose_cmax(parsedlistpath = 'D:/analysis/DILI timepoint/data/', name = 'BIP', cyto = TRUE)
+loaded_data <- clean_load_sel_count_dose_cmax(parsedlistpath = 'D:/analysis/DILI timepoint/data/', name = name, cyto = cyto)
 
 outputdata <- calc_GFP_Counts(inputdata = loaded_data, ICAM = FALSE)
+
 outputdata <- norm_cell_counts(inputdata = outputdata)
 outputdata <- calc_cell_death(inputdata = outputdata)
 summ_data <- calc_summaries(inputdata = outputdata)
@@ -276,8 +293,6 @@ summ_data <- calc_ICAM1_diff(inputdata = summ_data, ICAM = TRUE)
 summ_data <- do.call('rbind', summ_data)
 
 write.table(summ_data, file = paste0('../generated/results/processed summaries/', name, '.txt'), sep = '\t', row.names = FALSE)
-
-
 
 
 
